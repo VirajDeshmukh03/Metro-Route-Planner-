@@ -23,24 +23,7 @@ g++ -std=c++11 -O2 cpp\main.cpp -o cpp\metro_planner.exe
 
 ---
 
-## 🎯 Mid-Sem Demo Steps (Click-and-Show)
 
-In the web dashboard, use the **Mid-Sem Demo Presets** located on the left panel:
-
-1. **Preset 1 (Baseline Route)**:
-   - Selects `PCMC` ➔ `Ramwadi` with `⚡ Fastest`.
-   - Explains: *Dijkstra's Algorithm using Min-Heap Priority Queue on Travel Time*.
-2. **Preset 2 (Dynamic Station Closure)**:
-   - Closes the central hub `Civil Court`.
-   - Explains: *Graph marks vertex inactive in O(1); Dijkstra automatically finds the detour via Shivajinagar-Ruby Hall connector*.
-3. **Preset 3 (Track Delay Simulation)**:
-   - Simulates a +15 min signal delay on the Khadki-Shivajinagar track.
-   - Explains: *Edge weight update in dynamic graph*.
-4. **Data Structures Inspector Tabs (Bottom of Page)**:
-   - **Tab 1: Adjacency List**: Shows the in-memory graph representation.
-   - **Tab 2: Hash Map**: Test station search (e.g. type `Shivajinagar` to show $O(1)$ key-to-ID lookup).
-   - **Tab 3: Execution Trace**: Step-by-step min-heap extractions and queue visits.
-   - **Tab 4: Multi-Criteria Comparison Table**: Side-by-side comparison of all 5 criteria.
 
 ---
 
@@ -65,12 +48,7 @@ Data Structures CP/
 │   ├── main.cpp                     # Full C++ implementation
 │   └── metro_planner.exe            # Pre-compiled executable
 │
-├── MIDSEM_VIVA_PREPARATION_GUIDE.md # Complete viva preparation guide (13 concepts + Q&A)
-├── PROJECT_REPORT_60PCT.md          # Formal mid-sem review report
 └── README.md                        # Quick start instructions
 ```
 
----
 
-## 📖 Viva Preparation
-Read **`MIDSEM_VIVA_PREPARATION_GUIDE.md`** before tomorrow's review. It has simple answers to the 13 core questions, code walkthroughs, and 15 expected professor questions!

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personalized Multi-Criteria Metro Route Planner | DS Course Project</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS & JS for Real Map of Pune -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="header">
+    <div class="brand-section">
+      <div class="logo-icon">🚇</div>
+      <div class="title-wrap">
+        <h1>Personalized Metro Route Planner</h1>
+        <p>Using Dynamic Graph Optimization • Data Structures Course Project (Mid-Sem Prototype)</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="badge-status" id="networkStatusBadge">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Network Operational</span>
+      </div>
+      <span class="badge-tag">Graph • Hash Map • Min-Heap • BFS • Dijkstra</span>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main class="main-container">
+    <div class="dashboard-grid">
+      
+      <!-- Left Column: User Controls & Dynamic Panel -->
+      <div class="controls-column">
+        
+        <!-- Journey Planner Card -->
+        <section class="card" id="plannerCard">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title"><span>🧭</span> Plan Your Journey</h2>
+              <div class="card-subtitle">Select origin, destination and routing preference</div>
+            </div>
+          </div>
+
+          <form id="routeForm" onsubmit="event.preventDefault(); handleFindRoute();">
+            <!-- Origin Selection -->
+            <div class="form-group">
+              <label class="form-label" for="fromStation">Origin Station</label>
+              <div class="station-input-row">
+                <select id="fromStation" class="select-control" aria-label="Select origin station"></select>
+              </div>
+            </div>
+
+            <!-- Swap Button -->
+            <div style="display: flex; justify-content: center; margin: -6px 0 10px 0;">
+              <button type="button" class="swap-btn" id="swapBtn" title="Swap Stations">⇄</button>
+            </div>
+
+            <!-- Destination Selection -->
+            <div class="form-group">
+              <label class="form-label" for="toStation">Destination Station</label>
+              <div class="station-input-row">
+                <select id="toStation" class="select-control" aria-label="Select destination station"></select>
+              </div>
+            </div>
+
+            <!-- Routing Preferences -->
+            <div class="form-group">
+              <label class="form-label">Optimization Criteria</label>
+              <div class="preference-grid">
+                <button type="button" class="pref-btn active" data-criteria="fastest">
+                  <span class="pref-icon">⚡</span>
+                  <div>
+                    <div>Fastest</div>
+                    <div style="font-size:10px;color:var(--text-dim)">Dijkstra (Time)</div>
+                  </div>
+                </button>
+                <button type="button" class="pref-btn" data-criteria="stops">
+                  <span class="pref-icon">🚆</span>
+                  <div>
+                    <div>Fewest Stops</div>
+                    <div style="font-size:10px;color:var(--text-dim)">BFS Algorithm</div>
+                  </div>
+                </button>
+                <button type="button" class="pref-btn" data-criteria="fare">
+                  <span class="pref-icon">₹</span>
+                  <div>
+                    <div>Lowest Fare</div>
+                    <div style="font-size:10px;color:var(--text-dim)">Dijkstra (Fare)</div>
+                  </div>
+                </button>
+                <button type="button" class="pref-btn" data-criteria="transfer">
+                  <span class="pref-icon">🔄</span>
+                  <div>
+                    <div>Fewest Transfers</div>
+                    <div style="font-size:10px;color:var(--text-dim)">Line-Change Aware</div>
+                  </div>
+                </button>
+                <button type="button" class="pref-btn full-width" data-criteria="balanced">
+                  <span class="pref-icon">⚖️</span>
+                  <div>
+                    <div>Balanced Route</div>
+                    <div style="font-size:10px;color:var(--text-dim)">Composite Multi-Criteria Score</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Search Button -->
+            <button type="submit" class="btn-primary" id="calculateRouteBtn">
+              <span>FIND OPTIMAL ROUTE</span>
+              <span>➔</span>
+            </button>
+          </form>
+
+          <!-- Quick Mid-Sem Demo Presets -->
+          <div class="presets-section">
+            <div class="presets-label">
+              <span>Mid-Sem Demo Presets</span>
+              <span style="color:#60a5fa; cursor:pointer;" onclick="runDemoScenario(1)">Try Demo 1</span>
+            </div>
+            <div class="preset-pills">
+              <button class="preset-pill" onclick="runDemoScenario(1)">
+                <span>1. Baseline: PCMC ➔ Ramwadi (Fastest)</span>
+                <span>➔</span>
+              </button>
+              <button class="preset-pill" onclick="runDemoScenario(2)">
+                <span>2. Dynamic Reroute: Close Civil Court Hub</span>
+                <span style="color:#f43f5e">⚠️ Dynamic</span>
+              </button>
+              <button class="preset-pill" onclick="runDemoScenario(3)">
+                <span>3. Track Delay: +15m delay on Khadki-Shivajinagar</span>
+                <span style="color:#fbbf24">⏱ Delay</span>
+              </button>
+              <button class="preset-pill" onclick="runDemoScenario(4)">
+                <span>4. Comparison: Vanaz ➔ Swargate</span>
+                <span>⚖ Multi-Line</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dynamic Graph Management Card -->
+        <section class="card dynamic-panel" id="dynamicPanel">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title"><span>⚙️</span> Dynamic Graph Updates</h2>
+              <div class="card-subtitle">Simulate real-time network conditions</div>
+            </div>
+            <button class="btn-secondary" onclick="handleResetNetwork()" title="Reset to initial state" style="font-size: 11px;">Reset All</button>
+          </div>
+
+          <div class="dynamic-controls-grid">
+            <!-- Station Status Toggle -->
+            <div class="control-subcard">
+              <div class="subcard-title">
+                <span>Station Closure Simulation</span>
+                <span id="closedStationsCount" class="badge-tag" style="background:#450a0a; color:#fda4af;">0 Closed</span>
+              </div>
+              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+                Toggle station availability. The algorithm removes closed vertices dynamically from path search.
+              </p>
+              <div class="flex-row">
+                <select id="stationToggleSelect" class="select-control" style="flex:1;"></select>
+                <button type="button" class="btn-secondary" id="stationToggleBtn" onclick="handleToggleStation()">Toggle</button>
+              </div>
+            </div>
+
+            <!-- Track / Connection Closure -->
+            <div class="control-subcard">
+              <div class="subcard-title">
+                <span>Track / Connection Closure</span>
+              </div>
+              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+                Deactivate specific metro track segments (edge removal in Adjacency List).
+              </p>
+              <div class="flex-row">
+                <select id="connectionToggleSelect" class="select-control" style="flex:1;"></select>
+                <button type="button" class="btn-secondary" id="connectionToggleBtn" onclick="handleToggleConnection()">Toggle</button>
+              </div>
+            </div>
+
+            <!-- Delay Injection / Edge Weight Adjustment -->
+            <div class="control-subcard">
+              <div class="subcard-title">
+                <span>Signal Delay / Travel-Time Update</span>
+              </div>
+              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+                Modify edge weight in real time to simulate maintenance, track works, or traffic hold-ups.
+              </p>
+              <div class="flex-row" style="margin-bottom:6px;">
+                <select id="edgeWeightSelect" class="select-control" style="flex:1;"></select>
+              </div>
+              <div class="flex-row">
+                <input type="number" id="newTimeInput" class="select-control" placeholder="New Time (min)" min="1" max="60" style="flex:1;">
+                <button type="button" class="btn-secondary" onclick="handleUpdateEdgeWeight()">Set Time</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Right Column: Interactive Map & Route Summary -->
+      <div class="map-column">
+        
+        <!-- Interactive Metro Map Card -->
+        <section class="card map-card">
+          <div class="map-card-header">
+            <div>
+              <h2 class="card-title"><span>🗺️</span> Interactive Metro Network Map</h2>
+              <div class="card-subtitle">Real Pune geographic map via Leaflet & Schematic graph view</div>
+            </div>
+            <div class="map-view-controls">
+              <div class="map-toggle-group">
+                <button type="button" class="map-mode-btn active" id="btnLeafletView" onclick="switchMapView('leaflet')">
+                  <span>🗺️</span> Real Pune Map (Leaflet)
+                </button>
+                <button type="button" class="map-mode-btn" id="btnSchematicView" onclick="switchMapView('schematic')">
+                  <span>📍</span> Schematic Transit Diagram
+                </button>
+              </div>
+              <div class="map-actions-group">
+                <button type="button" class="btn-secondary" onclick="fitRouteBounds()" title="Fit map to active route" style="font-size:11px; padding: 5px 9px;">🎯 Fit Route</button>
+                <button type="button" class="btn-secondary" onclick="resetPuneView()" title="Center on Pune" style="font-size:11px; padding: 5px 9px;">📍 Center Pune</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metro Line Legend -->
+          <div class="map-legend-bar">
+            <div class="legend-item"><span class="legend-line" style="background:var(--color-aqua);"></span> Aqua Line</div>
+            <div class="legend-item"><span class="legend-line" style="background:var(--color-purple);"></span> Purple Line</div>
+            <div class="legend-item"><span class="legend-line" style="background:#22c55e;"></span> Line 3 (Hinjawadi)</div>
+            <div class="legend-item"><span class="legend-line" style="background:var(--color-gold);"></span> Bypass Connector</div>
+            <div class="legend-item"><span class="legend-line" style="background:var(--color-orange);"></span> Express Link</div>
+            <div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;border:2px solid #ec4899;background:#fff;display:inline-block;"></span> Interchange Hub</div>
+          </div>
+
+          <!-- Dual Visual Map Viewport (Leaflet Real Map + SVG Schematic Map) -->
+          <div class="map-viewport" id="mapViewport">
+            <!-- 1. Leaflet Real Geographic Map Container -->
+            <div id="leafletMap" style="width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1;"></div>
+
+            <!-- 2. SVG Schematic Transit Diagram (Toggleable) -->
+            <svg id="metroSvg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; position: absolute; inset: 0; display: none; z-index: 2;">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa" />
+                </marker>
+              </defs>
+
+              <!-- Track background layer -->
+              <g id="trackBasesGroup"></g>
+
+              <!-- Track colored lines layer -->
+              <g id="tracksGroup"></g>
+
+              <!-- Edge weight labels layer -->
+              <g id="edgeLabelsGroup"></g>
+
+              <!-- Active Route Glow & Core Line Layer -->
+              <g id="activeRouteGroup"></g>
+
+              <!-- Station Nodes Layer -->
+              <g id="stationsGroup"></g>
+            </svg>
+          </div>
+        </section>
+
+        <!-- Route Summary & Performance Metrics Card -->
+        <section class="results-card" id="resultsCard">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="routeResultTitle"><span>📍</span> Optimal Route Summary</h2>
+              <div class="card-subtitle" id="routeResultSubtitle">Calculated using Dijkstra's Algorithm with Min-Heap</div>
+            </div>
+            <div id="algorithmBadge" class="badge-tag" style="background:rgba(59,130,246,0.15); color:#60a5fa; border-color:#3b82f6;">
+              Dijkstra • O((V+E) log V)
+            </div>
+          </div>
+
+          <!-- 4 Core Metrics -->
+          <div class="metrics-summary-grid">
+            <div class="metric-box metric-time">
+              <span class="metric-value" id="valTime">-- min</span>
+              <span class="metric-label">Estimated Travel Time</span>
+            </div>
+            <div class="metric-box metric-stops">
+              <span class="metric-value" id="valStops">--</span>
+              <span class="metric-label">Total Station Stops</span>
+            </div>
+            <div class="metric-box metric-fare">
+              <span class="metric-value" id="valFare">₹ --</span>
+              <span class="metric-label">Standard Fare</span>
+            </div>
+            <div class="metric-box metric-transfers">
+              <span class="metric-value" id="valTransfers">--</span>
+              <span class="metric-label">Interchange Transfers</span>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Itinerary -->
+          <div class="itinerary-section">
+            <div class="itinerary-list" id="itineraryContainer">
+              <div style="color:var(--text-muted); font-size:13px; text-align:center; padding: 20px;">
+                Select origin and destination stations, then click <b>Find Optimal Route</b>.
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>Personalized Multi-Criteria Metro Route Planner Using Dynamic Graph Optimization</p>
+    <p style="margin-top: 4px; color: var(--text-dim);">Data Structures Course Project Mid-Sem Review • 2nd Year Computer Engineering</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="data/metroData.js"></script>
+  <script src="ds/priorityQueue.js"></script>
+  <script src="ds/queue.js"></script>
+  <script src="ds/graph.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
